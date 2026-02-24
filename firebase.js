@@ -12,27 +12,40 @@ let serviceAccount;
 if (!rawCreds) {
   console.warn("⚠️ [Firebase] GOOGLE_APPLICATION_CREDENTIALS is missing in environment.");
 } else {
-  const trimmed = rawCreds.trim();
+  let trimmed = rawCreds.trim();
+
+  // Handle cases where the whole JSON might be wrapped in quotes by the environment manager
+  if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    console.log("🛰️ [Firebase] Removing enclosing quotes from credentials string...");
+    trimmed = trimmed.substring(1, trimmed.length - 1);
+  }
 
   if (trimmed.startsWith("{")) {
     console.log("📦 [Firebase] Detected JSON string. Attempting to parse...");
     try {
-      // PRO TIP: Do NOT replace \\n with \n BEFORE parsing. 
-      // JSON.parse handles \n automatically.
       serviceAccount = JSON.parse(trimmed);
       console.log("✅ [Firebase] JSON parsed successfully.");
     } catch (err) {
-      console.error("❌ [Firebase] JSON parse failed:", err.message);
-      console.log("💡 [Firebase] Attempting recovery by fixing literal newlines...");
+      console.error("❌ [Firebase] Standard JSON parse failed:", err.message);
+      console.log("💡 [Firebase] Attempting aggressive recovery/sanitization...");
       try {
-        // If there are literal newlines (actual line breaks), JSON.parse fails.
-        // We replace actual line breaks with \\n
-        const fixed = trimmed.replace(/\n/g, "\\n").replace(/\r/g, "\\r");
-        serviceAccount = JSON.parse(fixed);
-        console.log("✅ [Firebase] JSON parsed successfully after fixing literal newlines.");
+        const sanitized = trimmed
+          .replace(/\n/g, "\\n")
+          .replace(/\r/g, "\\r")
+          .replace(/\t/g, "\\t");
+
+        serviceAccount = JSON.parse(sanitized);
+        console.log("✅ [Firebase] JSON parsed successfully after sanitization.");
       } catch (err2) {
-        console.error("💀 [Firebase] Recovery failed. Please ensure the env var is a single-line JSON string.");
-        serviceAccount = trimmed;
+        console.error("💀 [Firebase] Sanitization failed:", err2.message);
+        try {
+          const fixed = trimmed.replace(/\\\\n/g, "\\n");
+          serviceAccount = JSON.parse(fixed);
+          console.log("✅ [Firebase] JSON parsed successfully after double-escape fix.");
+        } catch (err3) {
+          console.error("🆘 [Firebase] All parsing attempts failed.");
+          serviceAccount = trimmed;
+        }
       }
     }
   } else {
