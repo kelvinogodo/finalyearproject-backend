@@ -17,13 +17,23 @@ if (!rawCreds) {
   if (trimmed.startsWith("{")) {
     console.log("📦 [Firebase] Detected JSON string. Attempting to parse...");
     try {
-      // Fix for common newline issues in env vars
-      const sanitized = trimmed.replace(/\\n/g, '\n');
-      serviceAccount = JSON.parse(sanitized);
+      // PRO TIP: Do NOT replace \\n with \n BEFORE parsing. 
+      // JSON.parse handles \n automatically.
+      serviceAccount = JSON.parse(trimmed);
       console.log("✅ [Firebase] JSON parsed successfully.");
     } catch (err) {
       console.error("❌ [Firebase] JSON parse failed:", err.message);
-      serviceAccount = trimmed;
+      console.log("💡 [Firebase] Attempting recovery by fixing literal newlines...");
+      try {
+        // If there are literal newlines (actual line breaks), JSON.parse fails.
+        // We replace actual line breaks with \\n
+        const fixed = trimmed.replace(/\n/g, "\\n").replace(/\r/g, "\\r");
+        serviceAccount = JSON.parse(fixed);
+        console.log("✅ [Firebase] JSON parsed successfully after fixing literal newlines.");
+      } catch (err2) {
+        console.error("💀 [Firebase] Recovery failed. Please ensure the env var is a single-line JSON string.");
+        serviceAccount = trimmed;
+      }
     }
   } else {
     console.log("📄 [Firebase] Using credentials as file path/token.");
