@@ -27,8 +27,9 @@ export async function sendMotionEmail(to = process.env.ALERT_EMAIL, imageUrl = n
       <p>This is to notify you that motion was detected by your surveillance system.</p>
       ${
         imageUrl
-          ? `<p>Here’s the latest captured image:</p>
-             <img src="${imageUrl}" alt="Captured Image" style="max-width:100%; border-radius:8px;">`
+    ? `<p>Here’s the latest captured image:</p>
+          <a href='http://locahost:5173'>view captured images</a>
+            //  <img src="${imageUrl}" alt="Captured Image" style="max-width:100%; border-radius:8px;">`
           : `<p>No image was attached for this alert.</p>`
       }
       <p style="margin-top:20px;">Timestamp: ${new Date().toLocaleString()}</p>

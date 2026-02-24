@@ -1,8 +1,14 @@
 import express from "express";
 import { sendMotionEmail } from "../services/emailService.js";
 import { io } from "../utils/socketManager.js";
+import { relayStream } from "../services/streamRelay.js";
 
 const router = express.Router();
+
+// 📺 Live Stream Relay (CCTV Style)
+router.get("/live", (req, res) => {
+  relayStream(res);
+});
 
 // Route for motion detection alerts
 router.post("/motion-detected", async (req, res) => {

@@ -11,7 +11,8 @@ export async function sendMotionAlert(fcmToken, imageUrl) {
     },
     webpush: {
       fcmOptions: {
-        link: "https://projectfrontend-nu.vercel.app/motions", // frontend page
+        // link: "https://projectfrontend-nu.vercel.app/motions", // frontend page
+        link: "http://localhost:5173/motions", // frontend page
       },
     },
   };
